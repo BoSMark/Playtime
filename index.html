@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BoS OS">
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.json">
+<title>BoS Agent OS</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #f5f4f1;
+    --surface: #ffffff;
+    --border: #e2dfd8;
+    --text: #111111;
+    --text-2: #555555;
+    --text-3: #999999;
+    --accent: #e67e00;
+    --red: #c0392b;
+    --green: #1a6b3a;
+    --purple: #5c3d99;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+    padding-bottom: env(safe-area-inset-bottom, 24px);
+  }
+
+  /* ── Header ── */
+  .header {
+    background: #111;
+    color: #fff;
+    padding: 16px 16px 14px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .header h1 { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+  .header .sub { font-size: 11px; color: #888; margin-top: 2px; }
+  .header .right { text-align: right; }
+  .header .right .num { font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
+  .header .right .lbl { font-size: 10px; color: #777; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Scroll area ── */
+  .scroll { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* ── Countdown ── */
+  .countdown {
+    background: #fff8ec;
+    border: 1px solid #ffd280;
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .countdown .days { font-size: 36px; font-weight: 900; color: var(--accent); line-height: 1; min-width: 44px; }
+  .countdown .info .title { font-weight: 700; font-size: 14px; color: #5a3a00; }
+  .countdown .info .detail { font-size: 12px; color: #8a5a00; margin-top: 2px; line-height: 1.4; }
+
+  /* ── Alert banner ── */
+  .alert {
+    border-radius: 10px;
+    padding: 11px 14px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .alert.warn {
+    background: #fffbea;
+    border: 1px solid #f5e042;
+    border-left: 4px solid #d4a017;
+    color: #5a4200;
+  }
+  .alert.info {
+    background: #f5f3ff;
+    border: 1px solid #d4caff;
+    border-left: 4px solid var(--purple);
+    color: #3b2878;
+  }
+  .alert strong { font-weight: 700; display: block; margin-bottom: 2px; }
+
+  /* ── Stats row ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 6px;
+    text-align: center;
+  }
+  .stat .n { font-size: 26px; font-weight: 800; line-height: 1; }
+  .stat .l { font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-3); margin-top: 3px; line-height: 1.3; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    color: var(--text-3);
+    margin-top: 4px;
+    padding: 0 2px;
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  /* ── Mission rows ── */
+  .mission {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .mission:last-child { border-bottom: none; }
+  .mission .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .dot.urgent { background: var(--red); }
+  .dot.blocked { background: #e67e00; }
+  .dot.active { background: var(--green); }
+  .mission .content {}
+  .mission .name { font-weight: 600; font-size: 14px; color: var(--text); }
+  .mission .status-line { font-size: 12px; color: var(--text-2); margin-top: 3px; line-height: 1.4; }
+  .mission .status-line strong { color: var(--text); font-weight: 600; }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    vertical-align: middle;
+    margin-left: 4px;
+  }
+  .badge.active { background: #d4f5e2; color: #1a6b3a; }
+  .badge.draft { background: #e8e8e8; color: #555; }
+  .badge.warn { background: #fff3cd; color: #7a5200; }
+
+  /* ── Agent rows ── */
+  .agent-row {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .agent-row:last-child { border-bottom: none; }
+  .agent-name { font-weight: 600; font-size: 14px; }
+  .agent-note { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+
+  /* ── Open items ── */
+  .open-item {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .open-item:last-child { border-bottom: none; }
+  .open-item .owner {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .owner.urgent { color: var(--red); }
+  .owner.normal { color: var(--text-3); }
+  .open-item .desc { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.4; }
+  .open-item .detail { font-size: 12px; color: var(--text-2); margin-top: 3px; line-height: 1.4; }
+
+  /* ── RFC rows ── */
+  .rfc-row {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rfc-row:last-child { border-bottom: none; }
+  .rfc-row .rfc-name { font-weight: 600; font-size: 13px; }
+  .rfc-row .rfc-note { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+  /* ── Decision rows ── */
+  .decision-row {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-2);
+    line-height: 1.4;
+  }
+  .decision-row:last-child { border-bottom: none; }
+  .decision-row .dec-head { display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px; }
+  .decision-row .dec-num { font-weight: 700; color: var(--text); font-size: 14px; }
+  .decision-row .dec-date { font-size: 11px; color: var(--text-3); }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-3);
+    padding: 8px 14px 20px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <h1>BoS Agent OS</h1>
+    <div class="sub">Updated 24 Apr 2026</div>
+  </div>
+  <div class="right">
+    <div class="num">22</div>
+    <div class="lbl">Decisions</div>
+  </div>
+</div>
+
+<div class="scroll">
+
+  <!-- Countdown -->
+  <div class="countdown">
+    <div class="days">6</div>
+    <div class="info">
+      <div class="title">Days to Founder Circle launch</div>
+      <div class="detail">April 30 — Phase 2 outreach not started. Mark to review Tier 1 shortlist.</div>
+    </div>
+  </div>
+
+  <!-- Discrepancy -->
+  <div class="alert warn">
+    <strong>⚠ State discrepancy</strong>
+    Community &amp; Marketing Agent: session_summary shows DRAFT but Decision 21 confirms ACTIVE. Needs updating.
+  </div>
+
+  <!-- Draft pending -->
+  <div class="alert info">
+    <strong>📄 Draft awaiting review</strong>
+    AI Workshops Positioning Report — in 00_LOCAL_CONTEXT/. Not yet reviewed or promoted.
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="n">3</div>
+      <div class="l">Missions</div>
+    </div>
+    <div class="stat">
+      <div class="n" style="color:#1a6b3a">3</div>
+      <div class="l">Agents Active</div>
+    </div>
+    <div class="stat">
+      <div class="n" style="color:#e67e00">1</div>
+      <div class="l">Agent Draft</div>
+    </div>
+    <div class="stat">
+      <div class="n" style="color:#c0392b">5</div>
+      <div class="l">Blockers</div>
+    </div>
+  </div>
+
+  <!-- Missions -->
+  <div class="section-label">Active Missions</div>
+  <div class="card">
+    <div class="mission">
+      <div class="dot urgent"></div>
+      <div class="content">
+        <div class="name">MISSION-001 — Founder Circle Launch</div>
+        <div class="status-line"><strong>Urgent — April 30.</strong> Mark: review Tier 1 shortlist (85 people), identify founding member outreach candidates. Agent does not contact anyone.</div>
+      </div>
+    </div>
+    <div class="mission">
+      <div class="dot blocked"></div>
+      <div class="content">
+        <div class="name">MISSION-002 — Data Connection</div>
+        <div class="status-line">Phase 1 complete. Phase 2 blocked on <strong>Jann's return</strong> (~2 weeks). Drip API, Wistia, deduplication.</div>
+      </div>
+    </div>
+    <div class="mission">
+      <div class="dot blocked"></div>
+      <div class="content">
+        <div class="name">MISSION-003 — Online Workshop Programme</div>
+        <div class="status-line">Blocked on <strong>Mark</strong>: problem statement, participant output, session structure, and 2–3 calibration examples.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agents -->
+  <div class="section-label">Agent Status</div>
+  <div class="card">
+    <div class="agent-row">
+      <div>
+        <div class="agent-name">Speaker Curation Agent</div>
+        <div class="agent-note">Next: lean AI-augmented team research brief</div>
+      </div>
+      <span class="badge active">Active</span>
+    </div>
+    <div class="agent-row">
+      <div>
+        <div class="agent-name">Brand Quality Guardian</div>
+        <div class="agent-note">All external content routes through here</div>
+      </div>
+      <span class="badge active">Active</span>
+    </div>
+    <div class="agent-row">
+      <div>
+        <div class="agent-name">Community &amp; Marketing</div>
+        <div class="agent-note">Active per Decision 21 — session_summary needs update</div>
+      </div>
+      <span class="badge warn">Active*</span>
+    </div>
+    <div class="agent-row">
+      <div>
+        <div class="agent-name">Events Operations Agent</div>
+        <div class="agent-note">Waiting on Jo: spec review + RFC-103 runbook</div>
+      </div>
+      <span class="badge draft">Draft</span>
+    </div>
+  </div>
+
+  <!-- Open items -->
+  <div class="section-label">Open Items &amp; Blockers</div>
+  <div class="card">
+    <div class="open-item">
+      <div class="owner urgent">Mark — Urgent (before April 30)</div>
+      <div class="desc">MISSION-001: review Tier 1 shortlist, identify founding member outreach candidates</div>
+    </div>
+    <div class="open-item">
+      <div class="owner urgent">Mark — Urgent</div>
+      <div class="desc">MISSION-003 Phase 1 inputs: problem statement, output, structure, calibration examples</div>
+    </div>
+    <div class="open-item">
+      <div class="owner normal">Giselle</div>
+      <div class="desc">RFC-101 operational detail</div>
+      <div class="detail">Visual identity, channels, NPS/PMF data, repeat attendance rate, best quotes for copy.</div>
+    </div>
+    <div class="open-item">
+      <div class="owner normal">Jo Littlewood</div>
+      <div class="desc">RFC-103 operations runbook</div>
+      <div class="detail">Venue criteria, suppliers, event timeline, comms sequence, on-site structure, contingency plans.</div>
+    </div>
+    <div class="open-item">
+      <div class="owner normal">Jo Littlewood</div>
+      <div class="desc">Events Operations Agent spec review &amp; sign-off</div>
+    </div>
+    <div class="open-item">
+      <div class="owner normal">Jann — on return</div>
+      <div class="desc">RFC-102 north star metric + MISSION-002 Phase 2</div>
+      <div class="detail">Drip dedup pass on top 200–300 alumni before any systematic campaign.</div>
+    </div>
+  </div>
+
+  <!-- RFC Status -->
+  <div class="section-label">RFC Status</div>
+  <div class="card">
+    <div class="rfc-row">
+      <div>
+        <div class="rfc-name">RFC-100 Values</div>
+      </div>
+      <span class="badge active">Active</span>
+    </div>
+    <div class="rfc-row">
+      <div>
+        <div class="rfc-name">RFC-101 Brand</div>
+        <div class="rfc-note">Giselle: operational detail</div>
+      </div>
+      <span class="badge warn">v1.2</span>
+    </div>
+    <div class="rfc-row">
+      <div>
+        <div class="rfc-name">RFC-102 Growth</div>
+        <div class="rfc-note">Giselle: op detail; referral programme</div>
+      </div>
+      <span class="badge warn">v1.3</span>
+    </div>
+    <div class="rfc-row">
+      <div>
+        <div class="rfc-name">RFC-103 Community &amp; Events</div>
+        <div class="rfc-note">Jo: operations runbook</div>
+      </div>
+      <span class="badge warn">Strategic</span>
+    </div>
+    <div class="rfc-row">
+      <div><div class="rfc-name">RFC-104 Speaker Curation</div></div>
+      <span class="badge active">Active</span>
+    </div>
+    <div class="rfc-row">
+      <div><div class="rfc-name">RFC-105 Decision Governance</div></div>
+      <span class="badge active">Active</span>
+    </div>
+    <div class="rfc-row">
+      <div><div class="rfc-name">RFC-106 Competitive Diff.</div></div>
+      <span class="badge active">Active</span>
+    </div>
+    <div class="rfc-row">
+      <div><div class="rfc-name">RFC-107 Leadership Continuity</div></div>
+      <span class="badge active">v1.2</span>
+    </div>
+  </div>
+
+  <!-- Recent Decisions -->
+  <div class="section-label">Recent Decisions</div>
+  <div class="card">
+    <div class="decision-row">
+      <div class="dec-head"><span class="dec-num">#22</span><span class="dec-date">2026-04-24</span></div>
+      RFC-101: NPS replaced with PMF satisfaction question. Repeat attendance rate still outstanding (Jann).
+    </div>
+    <div class="decision-row">
+      <div class="dec-head"><span class="dec-num">#21</span><span class="dec-date">2026-04-24</span></div>
+      Governance fix: agent activation requires all named approvers. Community &amp; Marketing Agent confirmed ACTIVE. RFC-105 v1.2 + CLAUDE.md updated.
+    </div>
+    <div class="decision-row">
+      <div class="dec-head"><span class="dec-num">#20</span><span class="dec-date">2026-04-24</span></div>
+      Workshop format confirmed (4-week cohort, 2h/week, max 12). Pricing $2k–$4k in-band with Reforge.
+    </div>
+    <div class="decision-row">
+      <div class="dec-head"><span class="dec-num">#19</span><span class="dec-date">2026-04-23</span></div>
+      Jo briefing document approved and filed to 05_ARTIFACTS.
+    </div>
+    <div class="decision-row">
+      <div class="dec-head"><span class="dec-num">#18</span><span class="dec-date">2026-04-23</span></div>
+      MISSION-003 created. First topic: "Using AI to understand your business." Blocked on Mark's Phase 1 inputs.
+    </div>
+  </div>
+
+  <div class="footer">BoS Agent OS · static snapshot · 24 Apr 2026</div>
+
+</div>
+
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  }
+</script>
+</body>
+</html>
